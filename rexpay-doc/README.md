@@ -1,4 +1,4 @@
-# npm_xpressPay
+# rexpay
 
 This is a JavaScript library for implementing XpressPay payment gateway
 
