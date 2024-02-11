@@ -1,70 +1,167 @@
-# Getting Started with Create React App
+# npm_xpressPay
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a JavaScript library for implementing XpressPay payment gateway
 
-## Available Scripts
+## Demo
 
-In the project directory, you can run:
+![Demo](rexpay.png?raw=true "Demo Image")
 
-### `npm start`
+## Get Started
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+This Javascript library provides a wrapper to add RexPay to your React application
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
 
-### `npm test`
+### Install
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```sh
+npm install i rexpay
+```
 
-### `npm run build`
+or with `yarn`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```sh
+yarn add rexpay
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Usage
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This library can be implemented into any Javascript framework application
 
-### `npm run eject`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 1. Using React
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```javascript
+import logo from "./logo.svg";
+import "./App.css";
+import React, { useState, useEffect } from "react";
+import RexPay from "rexpay";
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+function App() {
+  const [state, setState] = useState({
+    amount: "",
+    loading: false,
+    transactions: [],
+  });
+  function OnClickPayButton() {
+    let transactionId = "Test" + Math.floor(Math.random() * 1000000);
+    setState({ ...state, loading: true });
+    const rex = new RexPay();
+    try {
+      rex.initializePayment({
+        reference: transactionId,
+        amount: 100,
+        currency: "NGN",
+        userId: "test@gmail.com",
+        callbackUrl: "google.com",
+        metadata: {
+          email: "test@gmail.com",
+          customerName: "Test User",
+        },
+      }).then((response) => {
+        if (response.success) {
+          setState({ ...state, loading: false });
+          sessionStorage.setItem("tranId", transactionId); // it can be saved to Database.
+          sessionStorage.setItem("reference", response.data?.reference); // it can be saved to Database
+          window.location.href = response.data?.authorizeUrl;
+        } else {
+          setState({ ...state, loading: false });
+          window.location.href = response.data?.authorizeUrl;
+        }
+      });
+    } catch (error) {
+      //handle error
+      console.log(error);
+    }
+  }
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+  function VerifyPayment() {
+    try {
+      const tranId =
+        localStorage.getItem("tranId") === null
+          ? ""
+          : localStorage.getItem("tranId");
+     const rex = new RexPay();
+      rex.VerifyPayment({
+        transactionReference: tranId,
+      }).then((response) => {
+        let amount = response?.data?.amount;
+        if (amount) {
+          setState({ ...state, amount, transactions: response.data.history });
+        } else {
+          setState({ ...state, amount: "" });
+        }
+      });
+    } catch (error) {
+      //handle error
+      setState({ ...state, amount: "" });
+    }
+  }
+  useEffect(() => {
+    // or ComponentDidMount if you are using class component
+    VerifyPayment();
+  }, []);
 
-## Learn More
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        {state.amount?.length > 0 ? (
+          <p>
+            You have paid <code>{state.amount}</code>
+          </p>
+        ) : (
+          ""
+        )}
+        <button
+          onClick={() => OnClickPayButton()}
+          style={{
+            backgroundColor: state.loading ? "#afdbb1" : "",
+            height: "30px",
+            width: "120px",
+            borderRadius: "5px",
+            background: "#3cbe3c",
+            border: "none",
+            color: "white",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+          disabled={state.loading ? true : false}
+          type="submit"
+        >
+          {state.loading ? "Paying" : " Pay 1,000"}
+        </button>
+      </header>
+    </div>
+  );
+}
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```
+  #### Request for calling InitialisePayment function.
 
-### Code Splitting
+To initialize the transaction, you'll need to pass information such as email, first name, last name amount, publicKey, etc. Email and amount are required. You can also pass any other additional information in the metadata object field. Here is the full list of parameters you can pass:
+|Param       | Type                 | Default    | Required | Description                      
+| :------------ | :------------------- | :--------- | :------- | :-------------------------------------------------
+| amount	| `number`			   | undefined      | `true`  | Amount you want to debit customer e.g 1000.00, 10.00...
+| reference      | `string`             | undefined   | `true`  | Unique case sensitive transaction identification
+| userId | `string`             | undefined       | `true`  | Email address of customer or any user identification
+| publicKey       | `string`        | undefined | `true`  | Your public key from XpressPay.
+| currency      | `string`  |  `NGN`    | `true`   | Currency charge should be performed in. Allowed only `NGN`.
+| mode      | `string`  |  `Debug`    | `true`   | Allowed values are `Debug` or `Live`.
+| callBackUrl      | `string`  |  your current url page    | `false`   | CallbackUrl is the url you want your customer to be redirected to when payment is successful. The default url is the page url where customer intialized payment.
+| metadata      | `object`  |  empty `object`    | `false`   | Object containing any extra information you want recorded with the transaction.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Please checkout [RexPay Documentation](https://github.com) other ways you can integrate with our plugin
 
-### Analyzing the Bundle Size
+## How can I thank you?
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+Why not star the github repo? I'd love the attention! Why not share the link for this repository on Twitter or Any Social Media? Spread the word!
 
-### Making a Progressive Web App
+Don't forget to [follow me on twitter](https://twitter.com/muyiTechBadtGuy)!
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Thanks!
+Olumuyiwa Aro.
 
-### Advanced Configuration
+## License
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details

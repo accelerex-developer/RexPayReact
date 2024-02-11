@@ -2,7 +2,7 @@
 import logo from "./logo.svg";
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import {RexPay} from "rexpay";
+import RexPay from "rexpay";
 
 function App() {
   const [state, setState] = useState({
@@ -13,28 +13,31 @@ function App() {
   function OnClickPayButton() {
     let transactionId = "Test" + Math.floor(Math.random() * 1000000);
     setState({ ...state, loading: true });
+    const rex = new RexPay();
     try {
-      RexPay.initializePayment({
-        reference: transactionId,
-        amount: 100,
-        currency: "NGN",
-        userId: "test@gmail.com",
-        callbackUrl: "google.com",
-        metadata: {
-          email: "test@gmail.com",
-          customerName: "Test User",
-        },
-      }).then((response) => {
-        if (response.success) {
-          setState({ ...state, loading: false });
-          sessionStorage.setItem("tranId", transactionId); // it can be saved to Database.
-          sessionStorage.setItem("reference", response.data?.reference); // it can be saved to Database
-          window.location.href = response.data?.authorizeUrl;
-        } else {
-          setState({ ...state, loading: false });
-          window.location.href = response.data?.authorizeUrl;
-        }
-      });
+      rex
+        .initializePayment({
+          reference: transactionId,
+          amount: 100,
+          currency: "NGN",
+          userId: "test@gmail.com",
+          callbackUrl: "google.com",
+          metadata: {
+            email: "test@gmail.com",
+            customerName: "Test User",
+          },
+        })
+        .then((response) => {
+          if (response.success) {
+            setState({ ...state, loading: false });
+            sessionStorage.setItem("tranId", transactionId); // it can be saved to Database.
+            sessionStorage.setItem("reference", response.data?.reference); // it can be saved to Database
+            window.location.href = response.data?.authorizeUrl;
+          } else {
+            setState({ ...state, loading: false });
+            window.location.href = response.data?.authorizeUrl;
+          }
+        });
     } catch (error) {
       //handle error
       console.log(error);
@@ -47,16 +50,19 @@ function App() {
         localStorage.getItem("tranId") === null
           ? ""
           : localStorage.getItem("tranId");
-      RexPay.VerifyPayment({
-        transactionReference: tranId,
-      }).then((response) => {
-        let amount = response?.data?.amount;
-        if (amount) {
-          setState({ ...state, amount, transactions: response.data.history });
-        } else {
-          setState({ ...state, amount: "" });
-        }
-      });
+      const rex = new RexPay();
+      rex
+        .VerifyPayment({
+          transactionReference: tranId,
+        })
+        .then((response) => {
+          let amount = response?.data?.amount;
+          if (amount) {
+            setState({ ...state, amount, transactions: response.data.history });
+          } else {
+            setState({ ...state, amount: "" });
+          }
+        });
     } catch (error) {
       //handle error
       setState({ ...state, amount: "" });
