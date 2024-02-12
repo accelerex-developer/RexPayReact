@@ -146,7 +146,7 @@ To initialize the transaction, you'll need to pass information such as email, fi
 | reference      | `string`             | undefined   | `true`  | Unique case sensitive transaction identification
 | userId | `string`             | undefined       | `true`  | Email address of customer or any user identification
 | currency      | `string`  |  `NGN`    | `true`   | Currency charge should be performed in. Allowed only `NGN`.
-| mode      | `string`  |  `Debug`    | `true`   | Allowed values are `Debug` or `Live`.
+| mode      | `string`  |  `Debug or Live`    | `Debug`   | Allowed values are `Debug` or `Live`.
 | callBackUrl      | `string`  |  your current url page    | `false`   | CallbackUrl is the url you want your customer to be redirected to when payment is successful. The default url is the page url where customer intialized payment.
 | metadata      | `object`  |  empty `object`    | `false`   | Object containing any extra information you want recorded with the transaction.
 
