@@ -15,7 +15,6 @@ This Javascript library provides a wrapper to add RexPay to your React applicati
 
 ```sh
 npm install i rexpay
-Typescript installation: npm install --save-dev @types/rexpay
 ```
 
 or with `yarn`
